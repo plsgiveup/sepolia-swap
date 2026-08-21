@@ -29,7 +29,7 @@ export default function Page() {
           Testnet only. These tokens are worth nothing and the prices here mean nothing.
         </div>
         <div>
-          Build <span>{process.env.NEXT_PUBLIC_BUILD ?? 'wallet-bar-3'}</span>
+          Build <span>{process.env.NEXT_PUBLIC_BUILD ?? 'limen-tones-4'}</span>
         </div>
       </footer>
     </main>
