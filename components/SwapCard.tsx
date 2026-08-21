@@ -10,6 +10,7 @@ import { sepolia } from 'wagmi/chains'
 import { ROUTER, USDC, WETH, erc20Abi, feeLabel, routerAbi } from '@/lib/contracts'
 import { useBestQuote } from '@/lib/useBestQuote'
 import { SEPOLIA_ID, useWalletChain } from '@/lib/useWalletChain'
+import { BridgeModal } from './BridgeModal'
 
 const ZERO = '0x0000000000000000000000000000000000000000'
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
@@ -104,6 +105,16 @@ export function SwapCard() {
   })
 
   if (mined && usdcBalance !== undefined) void refetchUsdc()
+
+  // One prompt per swap. Keying on the hash means a second swap opens it again,
+  // but dismissing it doesn't bring it straight back.
+  const [promptedFor, setPromptedFor] = useState<string | null>(null)
+  const [bridgeOpen, setBridgeOpen] = useState(false)
+  useEffect(() => {
+    if (!mined || !hash || promptedFor === hash) return
+    setPromptedFor(hash)
+    setBridgeOpen(true)
+  }, [mined, hash, promptedFor])
 
   const insufficient = Boolean(
     amountIn && ethBalance && amountIn > ethBalance.value
@@ -362,6 +373,12 @@ export function SwapCard() {
           </p>
         </div>
       </section>
+
+      <BridgeModal
+        open={bridgeOpen}
+        onClose={() => setBridgeOpen(false)}
+        amount={out ? Number(out).toLocaleString('en-US', { maximumFractionDigits: 2 }) : null}
+      />
     </div>
   )
 }

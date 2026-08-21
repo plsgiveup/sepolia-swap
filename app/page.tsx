@@ -29,7 +29,7 @@ export default function Page() {
           Testnet only. These tokens are worth nothing and the prices here mean nothing.
         </div>
         <div>
-          Build <span>{process.env.NEXT_PUBLIC_BUILD ?? 'cta-inline-5'}</span>
+          Build <span>{process.env.NEXT_PUBLIC_BUILD ?? 'bridge-modal-6'}</span>
         </div>
       </footer>
     </main>
