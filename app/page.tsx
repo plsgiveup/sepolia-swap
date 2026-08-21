@@ -26,6 +26,9 @@ export default function Page() {
         <div>
           Testnet only. These tokens are worth nothing and the prices here mean nothing.
         </div>
+        <div>
+          Build <span>{process.env.NEXT_PUBLIC_BUILD ?? 'network-guard-2'}</span>
+        </div>
       </footer>
     </main>
   )

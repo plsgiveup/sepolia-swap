@@ -1,33 +1,80 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { formatUnits, parseEther } from 'viem'
 import {
-  useAccount, useBalance, useChainId, useConnect, useReadContract,
-  useSwitchChain, useWaitForTransactionReceipt, useWriteContract,
+  useAccount, useBalance, useConnect, useReadContract,
+  useWaitForTransactionReceipt, useWriteContract,
 } from 'wagmi'
 import { sepolia } from 'wagmi/chains'
 import { ROUTER, USDC, WETH, erc20Abi, feeLabel, routerAbi } from '@/lib/contracts'
 import { useBestQuote } from '@/lib/useBestQuote'
+import { SEPOLIA_ID, useWalletChain } from '@/lib/useWalletChain'
 
 const ZERO = '0x0000000000000000000000000000000000000000'
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
 
+const CHAIN_NAMES: Record<number, string> = {
+  1: 'Ethereum mainnet',
+  10: 'OP Mainnet',
+  56: 'BNB Smart Chain',
+  137: 'Polygon',
+  8453: 'Base',
+  42161: 'Arbitrum One',
+  43114: 'Avalanche',
+  84532: 'Base Sepolia',
+  421614: 'Arbitrum Sepolia',
+}
+const chainName = (id?: number | null) =>
+  id === null || id === undefined ? 'another network' : CHAIN_NAMES[id] ?? `chain ${id}`
+
 export function SwapCard() {
   const [raw, setRaw] = useState('')
   const { address, isConnected } = useAccount()
-  const chainId = useChainId()
   const { connect, connectors, isPending: connecting } = useConnect()
-  const { switchChain, isPending: switching } = useSwitchChain()
 
-  const onSepolia = chainId === sepolia.id
+  // Chain state comes from the wallet provider, not from wagmi's cached
+  // connection — see lib/useWalletChain.
+  const { chainId, onSepolia, ensureSepolia, refresh: refreshChain, ready } = useWalletChain()
+  const [switching, setSwitching] = useState(false)
+  const [switchError, setSwitchError] = useState<string | null>(null)
 
-  const { data: ethBalance } = useBalance({ address })
+  const wrongNetwork = isConnected && ready && chainId !== null && !onSepolia
+
+  const goToSepolia = useCallback(async () => {
+    setSwitching(true)
+    setSwitchError(null)
+    try {
+      const landed = await ensureSepolia()
+      if (landed !== SEPOLIA_ID) {
+        setSwitchError('Your wallet stayed on the other network. Approve the prompt to continue.')
+      }
+      return landed === SEPOLIA_ID
+    } catch (e) {
+      setSwitchError((e as Error).message)
+      return false
+    } finally {
+      setSwitching(false)
+    }
+  }, [ensureSepolia])
+
+  // Offer the switch once per network the wallet lands on. Asking again after a
+  // rejection would trap the user in a popup loop.
+  const asked = useRef<number | null>(null)
+  useEffect(() => {
+    if (!wrongNetwork || chainId === null) return
+    if (asked.current === chainId) return
+    asked.current = chainId
+    void goToSepolia()
+  }, [wrongNetwork, chainId, goToSepolia])
+
+  const { data: ethBalance } = useBalance({ address, chainId: sepolia.id })
   const { data: usdcBalance, refetch: refetchUsdc } = useReadContract({
     address: USDC,
     abi: erc20Abi,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
+    chainId: sepolia.id,
     query: { enabled: Boolean(address) },
   })
 
@@ -46,6 +93,7 @@ export function SwapCard() {
   const { writeContract, data: hash, isPending: signing, error: writeError, reset } = useWriteContract()
   const { isLoading: mining, isSuccess: mined } = useWaitForTransactionReceipt({
     hash,
+    chainId: sepolia.id,
     query: { enabled: Boolean(hash) },
   })
 
@@ -59,8 +107,17 @@ export function SwapCard() {
     isConnected && onSepolia && amountIn && quote.best && !insufficient && !signing && !mining
   )
 
-  function swap() {
+  async function swap() {
     if (!amountIn || !quote.best || !address) return
+
+    // Last line of defence. Every piece of UI state above could be stale; this
+    // asks the wallet directly and refuses to sign anywhere but Sepolia.
+    const live = await refreshChain()
+    if (live !== SEPOLIA_ID) {
+      const moved = await goToSepolia()
+      if (!moved) return
+    }
+
     reset()
     // amountOutMinimum at 95% of quote. Testnet pools are thin enough that
     // the price can move between quoting and mining.
@@ -69,6 +126,7 @@ export function SwapCard() {
       address: ROUTER,
       abi: routerAbi,
       functionName: 'exactInputSingle',
+      chainId: sepolia.id,
       value: amountIn,
       args: [{
         tokenIn: WETH,
@@ -96,6 +154,35 @@ export function SwapCard() {
         </div>
 
         <div className="panel-body">
+          {wrongNetwork ? (
+            <div className="gate">
+              <p className="gate-title">Sepolia only</p>
+              <p className="gate-copy">
+                Your wallet is on {chainName(chainId)}. Nothing here works on any other
+                network, and the addresses this app calls do not mean the same thing
+                elsewhere. Switch over to continue.
+              </p>
+              <button
+                className="action"
+                disabled={switching}
+                onClick={() => {
+                  asked.current = null
+                  void goToSepolia()
+                }}
+              >
+                {switching ? 'Check your wallet' : 'Switch to Sepolia'}
+              </button>
+              {switchError && (
+                <div className="status bad">
+                  {switchError}
+                  <br />
+                  If the network never appears, turn on test networks in your wallet&apos;s
+                  settings, then try again.
+                </div>
+              )}
+            </div>
+          ) : (
+          <>
           <div className="field-label">
             <span>You pay</span>
             {ethBalance && (
@@ -159,14 +246,6 @@ export function SwapCard() {
             >
               {connecting ? 'Connecting' : 'Connect wallet'}
             </button>
-          ) : !onSepolia ? (
-            <button
-              className="action"
-              disabled={switching}
-              onClick={() => switchChain({ chainId: sepolia.id })}
-            >
-              {switching ? 'Switching' : 'Switch to Sepolia'}
-            </button>
           ) : (
             <button className="action" disabled={!canSwap} onClick={swap}>
               {signing ? 'Confirm in wallet' : mining ? 'Swapping' : insufficient ? 'Not enough ETH' : 'Swap'}
@@ -199,6 +278,8 @@ export function SwapCard() {
                 </>
               )}
             </div>
+          )}
+          </>
           )}
         </div>
       </section>
