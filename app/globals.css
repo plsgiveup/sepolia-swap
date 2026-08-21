@@ -375,19 +375,27 @@ html, body {
 
 /* ---- post-swap next step ---- */
 
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
 .next-step {
-  grid-column: 1 / -1;
   border: 1px solid var(--crimson-dim);
   border-radius: 4px;
   background: var(--paper);
   padding: 22px 24px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 18px 28px;
+  animation: rise 240ms ease-out;
 }
 
-.next-copy { flex: 1 1 280px; min-width: 0; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.next-copy { min-width: 0; margin-bottom: 18px; }
 
 .next-eyebrow {
   font-family: var(--mono);
@@ -414,14 +422,10 @@ html, body {
 }
 
 .bridge {
-  flex: 0 0 auto;
+  display: block;
   margin-top: 0;
-  width: auto;
+  width: 100%;
   padding: 14px 26px;
+  text-align: center;
   text-decoration: none;
-  white-space: nowrap;
-}
-
-@media (max-width: 560px) {
-  .bridge { width: 100%; text-align: center; }
 }

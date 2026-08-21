@@ -153,6 +153,7 @@ export function SwapCard() {
 
   return (
     <div className="columns">
+      <div className="col">
       <section className="panel">
         <div className="panel-head">
           <span>Swap</span>
@@ -305,6 +306,28 @@ export function SwapCard() {
         </div>
       </section>
 
+      {mined && (
+        <aside className="next-step">
+          <div className="next-copy">
+            <p className="next-eyebrow">Next</p>
+            <p className="next-title">Take this USDC to Arc</p>
+            <p className="next-note">
+              Pick Ethereum Sepolia as the source chain on the bridge — it defaults to
+              Base Sepolia.
+            </p>
+          </div>
+          <a
+            className="action bridge"
+            href="https://limen.finance/bridge"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Bridge to Arc →
+          </a>
+        </aside>
+      )}
+      </div>
+
       <section className="panel">
         <div className="panel-head">
           <span>The call being made</span>
@@ -339,27 +362,6 @@ export function SwapCard() {
           </p>
         </div>
       </section>
-
-      {mined && (
-        <aside className="next-step">
-          <div className="next-copy">
-            <p className="next-eyebrow">Next</p>
-            <p className="next-title">Take this USDC to Arc</p>
-            <p className="next-note">
-              Pick Ethereum Sepolia as the source chain on the bridge — it defaults to
-              Base Sepolia.
-            </p>
-          </div>
-          <a
-            className="action bridge"
-            href="https://limen.finance/bridge"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Bridge to Arc →
-          </a>
-        </aside>
-      )}
     </div>
   )
 }
