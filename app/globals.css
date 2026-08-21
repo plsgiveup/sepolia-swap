@@ -329,3 +329,85 @@ body::before {
 }
 
 .gate .action { margin-top: 22px; }
+
+/* ---- wallet bar ---- */
+
+.wallet-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 10px 14px;
+  margin-bottom: 40px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.wallet-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--chalk);
+  letter-spacing: 0.04em;
+}
+
+.wallet-id.muted { color: var(--muted); }
+
+.wallet-id .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ec98a;
+}
+
+.wallet-choices {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.wallet-bar > .link-btn { margin-left: auto; }
+
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--amber);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.link-btn:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+.link-btn:disabled { color: var(--muted); cursor: default; }
+
+.wallet-err { flex-basis: 100%; color: #f2b0aa; }
+
+/* ---- post-swap next step ---- */
+
+.next-step {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.bridge {
+  display: block;
+  margin-top: 0;
+  text-align: center;
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.next-note {
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  text-align: center;
+}

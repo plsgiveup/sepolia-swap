@@ -1,9 +1,11 @@
 import { SwapCard } from '@/components/SwapCard'
+import { WalletBar } from '@/components/WalletBar'
 import { USDC } from '@/lib/contracts'
 
 export default function Page() {
   return (
     <main className="shell">
+      <WalletBar />
       <p className="eyebrow">Ethereum Sepolia · Uniswap v3</p>
       <h1 className="title">
         Testnet ETH,<br />turned into <em>USDC</em>.
@@ -27,7 +29,7 @@ export default function Page() {
           Testnet only. These tokens are worth nothing and the prices here mean nothing.
         </div>
         <div>
-          Build <span>{process.env.NEXT_PUBLIC_BUILD ?? 'network-guard-2'}</span>
+          Build <span>{process.env.NEXT_PUBLIC_BUILD ?? 'wallet-bar-3'}</span>
         </div>
       </footer>
     </main>

@@ -25,6 +25,12 @@ const CHAIN_NAMES: Record<number, string> = {
   84532: 'Base Sepolia',
   421614: 'Arbitrum Sepolia',
 }
+/** A 429 from the wallet's own RPC, not from anything this app controls. */
+const isRateLimited = (e: unknown) => {
+  const msg = String((e as { message?: string })?.message ?? '')
+  return msg.includes('429') || /rate limit|too many requests/i.test(msg)
+}
+
 const chainName = (id?: number | null) =>
   id === null || id === undefined ? 'another network' : CHAIN_NAMES[id] ?? `chain ${id}`
 
@@ -244,7 +250,11 @@ export function SwapCard() {
               disabled={connecting || !connectors.length}
               onClick={() => connect({ connector: connectors[0] })}
             >
-              {connecting ? 'Connecting' : 'Connect wallet'}
+              {connecting
+                ? 'Connecting'
+                : connectors.length
+                  ? `Connect ${connectors[0].name}`
+                  : 'No wallet detected'}
             </button>
           ) : (
             <button className="action" disabled={!canSwap} onClick={swap}>
@@ -262,6 +272,16 @@ export function SwapCard() {
           {writeError && (
             <div className="status bad">
               {(writeError as { shortMessage?: string }).shortMessage ?? writeError.message}
+              {isRateLimited(writeError) && (
+                <>
+                  <br />
+                  <br />
+                  Your wallet broadcasts through its own Sepolia endpoint, and that one is
+                  refusing requests. Point it somewhere else: in Rabby, More → Custom RPC;
+                  in MetaMask, Settings → Networks → Sepolia. Any of these work —
+                  https://ethereum-sepolia-rpc.publicnode.com or https://sepolia.drpc.org
+                </>
+              )}
             </div>
           )}
 
@@ -277,6 +297,22 @@ export function SwapCard() {
                   Add {short(USDC)} to your wallet as a custom token to see the balance.
                 </>
               )}
+            </div>
+          )}
+
+          {mined && (
+            <div className="next-step">
+              <a
+                className="action ghost bridge"
+                href="https://limen.finance/bridge"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Bridge your USDC to Arc →
+              </a>
+              <p className="next-note">
+                Set the direction to Ethereum Sepolia → Arc once the bridge opens.
+              </p>
             </div>
           )}
           </>
